@@ -1,0 +1,52 @@
+{
+  "name": "fastify-multer-s3",
+  "version": "0.1.0",
+  "description": "Fastify streaming multer storage engine for AWS S3",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "test": "mocha tests/**/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bzstrausbaugh/fastify-multer-s3"
+  },
+  "keywords": [
+    "fastify",
+    "multer",
+    "s3",
+    "amazon",
+    "aws"
+  ],
+  "authors": [
+    "badunk",
+    "nociza",
+    "bzstrausbaugh"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/bzstrausbaugh/fastify-multer-s3#readme",
+  "dependencies": {
+    "file-type": "^19.0.0",
+    "run-parallel": "^1.2.0",
+    "is-svg": "5.0.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.12.4",
+    "@swc/core": "^1.4.13",
+    "@aws-sdk/client-s3": "^3.550.0",
+    "mock-req": "^0.2.0",
+    "ts-node": "^10.9.2",
+    "concat-stream": "^1.5.1",
+    "fastify": "^4.26.2",
+    "fastify-plugin": "^4.5.1",
+    "fastify-multer": "^2.0.3",
+    "form-data": "^1.0.0-rc3",
+    "mocha": "^10.2.0",
+    "on-finished": "^2.3.0",
+    "xtend": "^4.0.1",
+    "tsup": "^8.0.2"
+  },
+  "typings": "./index.d.ts"
+}
