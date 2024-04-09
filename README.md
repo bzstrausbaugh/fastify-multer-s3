@@ -1,52 +1,61 @@
 # Fastify Multer S3 Storage
 
-This is a fork of the Multer S3 Transform 2 (https://github.com/nociza/multer-s3-transform-2) that has been modified to work with the Fastify server.
+This is a port of the Multer S3 Transform 2 (https://github.com/nociza/multer-s3-transform-2) that has been updated to Typescript and modified to work with the Fastify server.
 
-# Multer S3 Transform 2
+> # Multer S3 Transform 2
+>
+> As of the time of writing, The original Multer S3 Transform is no longer being maintained. This is a fork of the original Multer S3 Transform, turned into es6 and kept up to date with the latest versions of Multer and S3FS without the vulnerable dependencies.
+>
+> > This is a fork of [Multer S3 Transform](https://github.com/kyh/multer-s3) which is a fork from [Multer S3](https://github.com/badunk/multer-s3), kept up to date, with the added [Transform](https://github.com/tehkaiyu/multer-s3#transforming-files-before-upload) property.
 
-As of the time of writing, The original Multer S3 Transform is no longer being maintained. This is a fork of the original Multer S3 Transform, turned into es6 and kept up to date with the latest versions of Multer and S3FS without the vulnerable dependencies.
+> Streaming Multer storage engine for AWS S3.
 
-> This is a fork of [Multer S3 Transform](https://github.com/kyh/multer-s3) which is a fork from [Multer S3](https://github.com/badunk/multer-s3), kept up to date, with the added [Transform](https://github.com/tehkaiyu/multer-s3#transforming-files-before-upload) property.
-
-Streaming Multer storage engine for AWS S3.
-
-This project is mostly an integration piece for existing code samples from Multer's [storage engine documentation](https://github.com/expressjs/multer/blob/master/StorageEngine.md) with [s3fs](https://github.com/RiptideElements/s3fs) as the substitution piece for file system. Existing solutions I found required buffering the multipart uploads into the actual filesystem which is difficult to scale.
+> This project is mostly an integration piece for existing code samples from Multer's [storage engine documentation](https://github.com/expressjs/multer/blob/master/StorageEngine.md) with [s3fs](https://github.com/RiptideElements/s3fs) as the substitution piece for file system. Existing solutions I found required buffering the multipart uploads into the actual filesystem which is difficult to scale.
 
 ## Installation
 
 ```sh
-npm install --save multer-s3-transform-2
+npm install --save fastify-multer-s3
 ```
 
 ## Usage
 
 ```javascript
-import aws from 'aws-sdk';
-import express from 'express';
-import multer from 'multer';
-import multerS3 from 'multer-s3-transform-2';
+import { S3Client } from '@aws-sdk/client-s3'
+import multer from 'fastify-multer';
+import multerS3 from 'fastify-multer-s3';
 
-var app = express();
-var s3 = new aws.S3({
-  /* ... */
-});
 
-var upload = multer({
+const s3Client = new S3Client({...});
+
+const multerUpload = multer({
+  limits: {
+    fileSize: 5368709120 //5GB
+  },
   storage: multerS3({
-    s3: s3,
-    bucket: 'some-bucket',
-    metadata: function (req, file, cb) {
+    s3,
+    bucket: 'bucket-name',
+    metadata: (req, file, cb) => {
       cb(null, { fieldName: file.fieldname });
     },
-    key: function (req, file, cb) {
+    key: (req, file, cb) => {
+      const { jobId }: any = req.params;
+      const fileSplit = split(file.originalname, '.');
+      const extension = fileSplit[fileSplit.length - 1];
       cb(null, Date.now().toString());
-    },
-  }),
+    }
+  })
 });
 
-app.post('/upload', upload.array('photos', 3), function (req, res, next) {
-  res.send('Successfully uploaded ' + req.files.length + ' files!');
-});
+
+
+const server = fastify({...});
+
+server.register(multer.contentParser);
+
+server.post('/upload', {preHandler: multerUpload.single('file')}, async (request, reply) => {
+  reply.send({success: true});
+})
 ```
 
 ### File information
