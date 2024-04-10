@@ -24,6 +24,12 @@
     "nociza",
     "bzstrausbaugh"
   ],
+  "files": [
+    "README.md",
+    "package.json",
+    "LICENSE",
+    "dist/**"
+  ],
   "license": "MIT",
   "homepage": "https://github.com/bzstrausbaugh/fastify-multer-s3#readme",
   "dependencies": {
