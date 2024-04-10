@@ -39,10 +39,7 @@ const multerUpload = multer({
       cb(null, { fieldName: file.fieldname });
     },
     key: (req, file, cb) => {
-      const { jobId }: any = req.params;
-      const fileSplit = split(file.originalname, '.');
-      const extension = fileSplit[fileSplit.length - 1];
-      cb(null, Date.now().toString());
+      cb(null, `${Date.now().toString()}-${file.originalname}`);
     }
   })
 });
