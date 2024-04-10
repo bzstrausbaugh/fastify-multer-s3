@@ -54,7 +54,7 @@
   "dependencies": {
     "magic-bytes.js": "^1.10.0",
     "run-parallel": "^1.2.0",
-    "is-svg": "5.0.0"
+    "is-svg": "^4.4.0"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
