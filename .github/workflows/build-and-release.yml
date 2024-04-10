@@ -31,7 +31,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
-          title: 'Development Build'
+          title: ${{ github.ref_name }}
           files: |
             dist/index.js
             dist/index.js.map
@@ -45,4 +45,3 @@ jobs:
         with:
           token: ${{ secrets.NPM_JS_TOKEN }}
           registry: 'https://registry.npmjs.org'
-          dry-run: true
