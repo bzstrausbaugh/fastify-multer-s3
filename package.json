@@ -52,7 +52,7 @@
   "license": "MIT",
   "homepage": "https://github.com/bzstrausbaugh/fastify-multer-s3#readme",
   "dependencies": {
-    "file-type": "^19.0.0",
+    "magic-bytes.js": "^1.10.0",
     "run-parallel": "^1.2.0",
     "is-svg": "5.0.0"
   },

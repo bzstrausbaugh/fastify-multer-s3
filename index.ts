@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import stream from 'node:stream';
-import { fileTypeFromBuffer } from 'file-type';
+import { filetypemime } from 'magic-bytes.js';
 import parallel from 'run-parallel';
 import isSvg from 'is-svg';
 
@@ -30,11 +30,11 @@ const defaultKey = (req, file, cb) => {
 
 const autoContentType = (req, file, cb) => {
   file.stream.once('data', async (firstChunk) => {
-    var type = await fileTypeFromBuffer(firstChunk);
+    var type: any[] = filetypemime(firstChunk);
     var mime;
 
-    if (type) {
-      mime = type.mime;
+    if (type && type.length > 0) {
+      mime = type[0];
     } else if (isSvg(firstChunk.toString())) {
       mime = 'image/svg+xml';
     } else {
