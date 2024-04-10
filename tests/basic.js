@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-import multerS3, { AUTO_CONTENT_TYPE } from '../dist/index.js';
+import multerS3, { AUTO_CONTENT_TYPE } from '../lib/esm/index.js';
 
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';

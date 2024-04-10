@@ -2,28 +2,36 @@
   "name": "fastify-multer-s3",
   "version": "0.1.0",
   "description": "Fastify streaming multer storage engine for AWS S3",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./lib/cjs/index.cjs",
+  "types": "./lib/index.d.ts",
   "type": "module",
   "exports": {
-    "./package.json": "./package.json",
     ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
       "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.cjs"
+        "types": "./lib/index.d.cts",
+        "default": "./lib/cjs/index.cjs"
+      },
+      "import": {
+        "types": "./lib/index.d.ts",
+        "default": "./lib/esm/index.js"
       }
     }
   },
   "files": [
-    "dist"
+    "lib/esm/index.js",
+    "lib/cjs/index.cjs",
+    "lib/index.d.ts",
+    "lib/index.d.cts"
   ],
   "scripts": {
-    "build": "tsup",
-    "test": "mocha tests/**/*.js"
+    "test": "mocha tests/**/*.js",
+    "clean": "rm -rf ./lib",
+    "build:types": "npx tsup ./index.ts --out-dir lib --dts-only --format esm,cjs",
+    "build:cjs": "tsc -p tsconfig.cjs.json && mv ./lib/cjs/index.js ./lib/cjs/index.cjs",
+    "build:esm": "tsc -p tsconfig.json",
+    "build:code": "npm run build:cjs && npm run build:esm",
+    "build": "npm run build:types && npm run build:code",
+    "build:clean": "npm run clean && npm run build"
   },
   "repository": {
     "type": "git",
@@ -51,6 +59,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.12.4",
+    "@types/run-parallel": "^1.1.2",
     "@swc/core": "^1.4.13",
     "@aws-sdk/client-s3": "^3.550.0",
     "mock-req": "^0.2.0",
