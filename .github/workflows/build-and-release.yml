@@ -1,11 +1,11 @@
-name: Pre-release build
+name: Build and release
 on:
   push:
-    branches:
-      - master
+    tags:
+      - v*
 
 jobs:
-  pre-release:
+  build-release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
@@ -17,6 +17,11 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: 'Change version'
+        uses: reedyuk/npm-version@1.1.1
+        with:
+          version: ${{ github.ref_name }}
+
       - name: Build and Test
         run: |
           npm i && npm run build && npm run test
@@ -25,8 +30,7 @@ jobs:
         uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          automatic_release_tag: 'latest'
-          prerelease: true
+          prerelease: false
           title: 'Development Build'
           files: |
             dist/index.js
@@ -35,3 +39,10 @@ jobs:
             dist/index.cjs.map
             dist/index.d.cts
             dist/index.d.ts
+
+      - name: Publish npm package
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          token: ${{ secrets.NPM_JS_TOKEN }}
+          registry: 'https://registry.npmjs.org'
+          dry-run: true
