@@ -3,8 +3,24 @@
   "version": "0.1.0",
   "description": "Fastify streaming multer storage engine for AWS S3",
   "main": "dist/index.js",
-  "type": "module",
   "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "mocha tests/**/*.js"
