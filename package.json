@@ -2,8 +2,9 @@
   "name": "fastify-multer-s3",
   "version": "0.1.0",
   "description": "Fastify streaming multer storage engine for AWS S3",
-  "main": "index.js",
+  "main": "dist/index.js",
   "type": "module",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsup",
     "test": "mocha tests/**/*.js"
@@ -23,12 +24,6 @@
     "badunk",
     "nociza",
     "bzstrausbaugh"
-  ],
-  "files": [
-    "README.md",
-    "package.json",
-    "LICENSE",
-    "dist/**"
   ],
   "license": "MIT",
   "homepage": "https://github.com/bzstrausbaugh/fastify-multer-s3#readme",
