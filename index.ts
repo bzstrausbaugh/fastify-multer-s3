@@ -3,6 +3,12 @@ import stream from 'node:stream';
 import { filetypemime } from 'magic-bytes.js';
 import parallel from 'run-parallel';
 import isSvg from 'is-svg';
+import {
+  DeleteObjectCommand,
+  DeleteObjectCommandInput,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 
 const staticValue = (value) => {
   return function (req, file, cb) {
@@ -93,7 +99,7 @@ function collect(storage, req, file, cb) {
 }
 
 class S3Storage {
-  s3;
+  s3: S3Client;
   getBucket;
   getKey;
   getAcl;
@@ -340,48 +346,51 @@ class S3Storage {
       params['ContentDisposition'] = opts.contentDisposition;
     }
 
-    var upload = this.s3.upload(params);
+    var upload = new Upload({ client: this.s3, params });
 
-    upload.on('httpUploadProgress', function (ev) {
-      if (ev.total) currentSize = ev.total;
+    upload.on('httpUploadProgress', (progress) => {
+      if (progress.total) {
+        currentSize = progress.total;
+      }
     });
 
-    upload.send(function (err, result) {
-      if (err) return cb(err);
-
-      cb(null, {
-        size: currentSize,
-        bucket: opts.bucket,
-        key: opts.key,
-        acl: opts.acl,
-        contentType: opts.contentType,
-        contentDisposition: opts.contentDisposition,
-        storageClass: opts.storageClass,
-        serverSideEncryption: opts.serverSideEncryption,
-        metadata: opts.metadata,
-        location: result.Location,
-        etag: result.ETag,
-        versionId: result.VersionId,
-      });
-    });
+    upload
+      .done()
+      .then((output) => {
+        return cb(null, {
+          size: currentSize,
+          bucket: opts.bucket,
+          key: opts.key,
+          acl: opts.acl,
+          contentType: opts.contentType,
+          contentDisposition: opts.contentDisposition,
+          storageClass: opts.storageClass,
+          serverSideEncryption: opts.serverSideEncryption,
+          metadata: opts.metadata,
+          location: output.Location,
+          etag: output.ETag,
+          versionId: output.VersionId,
+        });
+      })
+      .catch((reason) => cb(reason));
   };
 
   transformUpload = (opts, req, file, cb) => {
     var storage = this;
     var results: any[] = [];
     parallel(
-      storage.getTransforms.map(function (transform) {
-        return transform.key.bind(storage, req, file);
-      }),
-      function (err, keys) {
+      storage.getTransforms.map((transform) =>
+        transform.key.bind(storage, req, file)
+      ),
+      (err, keys) => {
         if (err) return cb(err);
 
-        keys.forEach(function (key, i) {
+        keys.forEach((key: string, i: number) => {
           var currentSize = 0;
-          storage.getTransforms[i].transform(req, file, function (err, piper) {
+          storage.getTransforms[i].transform(req, file, async (err, piper) => {
             if (err) return cb(err);
 
-            var upload = storage.s3.upload({
+            const params = {
               Bucket: opts.bucket,
               Key: key,
               ACL: opts.acl,
@@ -392,34 +401,38 @@ class S3Storage {
               ServerSideEncryption: opts.serverSideEncryption,
               SSEKMSKeyId: opts.sseKmsKeyId,
               Body: (opts.replacementStream || file.stream).pipe(piper),
-            });
+            };
+
+            var upload = new Upload({ client: this.s3, params });
 
             upload.on('httpUploadProgress', function (ev) {
               if (ev.total) currentSize = ev.total;
             });
 
-            upload.send(function (err, result) {
-              if (err) return cb(err);
+            upload
+              .done()
+              .then((output) => {
+                results.push({
+                  id: storage.getTransforms[i].id || i,
+                  size: currentSize,
+                  bucket: opts.bucket,
+                  key: key,
+                  acl: opts.acl,
+                  contentType: opts.contentType,
+                  contentDisposition: opts.contentDisposition,
+                  storageClass: opts.storageClass,
+                  serverSideEncryption: opts.serverSideEncryption,
+                  metadata: opts.metadata,
+                  location: output.Location,
+                  etag: output.ETag,
+                  versionId: output.VersionId,
+                });
 
-              results.push({
-                id: storage.getTransforms[i].id || i,
-                size: currentSize,
-                bucket: opts.bucket,
-                key: key,
-                acl: opts.acl,
-                contentType: opts.contentType,
-                contentDisposition: opts.contentDisposition,
-                storageClass: opts.storageClass,
-                serverSideEncryption: opts.serverSideEncryption,
-                metadata: opts.metadata,
-                location: result.Location,
-                etag: result.ETag,
-              });
-
-              if (results.length === keys.length) {
-                return cb(null, { transforms: results });
-              }
-            });
+                if (results.length === keys.length) {
+                  return cb(null, { transforms: results });
+                }
+              })
+              .catch((reason) => cb(reason));
           });
         });
       }
@@ -427,7 +440,14 @@ class S3Storage {
   };
 
   _removeFile = (req, file, cb) => {
-    this.s3.deleteObject({ Bucket: file.bucket, Key: file.key }, cb);
+    const deleteCommandInput: DeleteObjectCommandInput = {
+      Bucket: file.bucket,
+      Key: file.key,
+    };
+    const deleteObjectCommand: DeleteObjectCommand = new DeleteObjectCommand(
+      deleteCommandInput
+    );
+    this.s3.send(deleteObjectCommand).then((output) => cb(output));
   };
 }
 

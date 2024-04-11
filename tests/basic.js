@@ -10,8 +10,15 @@ import multer from 'fastify-multer';
 import stream from 'node:stream';
 import FormData from 'form-data';
 import onFinished from 'on-finished';
-import mockS3 from './util/mock-s3.cjs';
 import MockReq from 'mock-req';
+import {
+  CreateMultipartUploadCommand,
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+  UploadPartCommand,
+} from '@aws-sdk/client-s3';
+import { mockClient } from 'aws-sdk-client-mock';
 
 var VALID_OPTIONS = {
   bucket: 'string',
@@ -26,6 +33,21 @@ var INVALID_OPTIONS = [
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+function setupMock(mock) {
+  mock.on(CreateMultipartUploadCommand).resolves({
+    ETag: 'mock-etag',
+    VersionId: 'mock-version',
+  });
+  mock.on(UploadPartCommand).resolves({
+    ETag: 'mock-etag',
+    VersionId: 'mock-version',
+  });
+  mock.on(PutObjectCommand).resolves({
+    ETag: 'mock-etag',
+    VersionId: 'mock-version',
+  });
+}
 
 function submitForm(multer, form, cb) {
   form.getLength(function (err, length) {
@@ -57,6 +79,19 @@ function submitForm(multer, form, cb) {
 }
 
 describe('Multer S3', function () {
+  let mock;
+  let s3;
+
+  beforeEach(() => {
+    mock = mockClient(S3Client);
+    s3 = new S3Client();
+  });
+  afterEach(() => {
+    if (mock) {
+      mock.reset();
+    }
+  });
+
   it('is exposed as a function', function () {
     assert.equal(typeof multerS3, 'function');
   });
@@ -72,7 +107,7 @@ describe('Multer S3', function () {
   });
 
   it('upload files', function (done) {
-    var s3 = mockS3();
+    setupMock(mock);
     var form = new FormData();
     var storage = multerS3({ s3: s3, bucket: 'test' });
     var upload = multer({ storage: storage });
@@ -94,14 +129,14 @@ describe('Multer S3', function () {
       assert.equal(req.file.size, 68);
       assert.equal(req.file.bucket, 'test');
       assert.equal(req.file.etag, 'mock-etag');
-      assert.equal(req.file.location, 'mock-location');
-
+      assert.equal(req.file.versionId, 'mock-version');
       done();
     });
   });
 
   it('uploads file with AES256 server-side encryption', function (done) {
-    var s3 = mockS3();
+    setupMock(mock);
+
     var form = new FormData();
     var storage = multerS3({
       s3: s3,
@@ -127,7 +162,7 @@ describe('Multer S3', function () {
       assert.equal(req.file.size, 68);
       assert.equal(req.file.bucket, 'test');
       assert.equal(req.file.etag, 'mock-etag');
-      assert.equal(req.file.location, 'mock-location');
+      assert.equal(req.file.versionId, 'mock-version');
       assert.equal(req.file.serverSideEncryption, 'AES256');
 
       done();
@@ -135,7 +170,8 @@ describe('Multer S3', function () {
   });
 
   it('uploads file with AWS KMS-managed server-side encryption', function (done) {
-    var s3 = mockS3();
+    setupMock(mock);
+
     var form = new FormData();
     var storage = multerS3({
       s3: s3,
@@ -161,7 +197,7 @@ describe('Multer S3', function () {
       assert.equal(req.file.size, 68);
       assert.equal(req.file.bucket, 'test');
       assert.equal(req.file.etag, 'mock-etag');
-      assert.equal(req.file.location, 'mock-location');
+      assert.equal(req.file.versionId, 'mock-version');
       assert.equal(req.file.serverSideEncryption, 'aws:kms');
 
       done();
@@ -169,7 +205,8 @@ describe('Multer S3', function () {
   });
 
   it('uploads PNG file with correct content-type', function (done) {
-    var s3 = mockS3();
+    setupMock(mock);
+
     var form = new FormData();
     var storage = multerS3({
       s3: s3,
@@ -197,7 +234,7 @@ describe('Multer S3', function () {
       assert.equal(req.file.size, 68);
       assert.equal(req.file.bucket, 'test');
       assert.equal(req.file.etag, 'mock-etag');
-      assert.equal(req.file.location, 'mock-location');
+      assert.equal(req.file.versionId, 'mock-version');
       assert.equal(req.file.serverSideEncryption, 'aws:kms');
 
       done();
@@ -205,7 +242,8 @@ describe('Multer S3', function () {
   });
 
   it('uploads SVG file with correct content-type', function (done) {
-    var s3 = mockS3();
+    setupMock(mock);
+
     var form = new FormData();
     var storage = multerS3({
       s3: s3,
@@ -231,7 +269,7 @@ describe('Multer S3', function () {
       assert.equal(req.file.size, 100);
       assert.equal(req.file.bucket, 'test');
       assert.equal(req.file.etag, 'mock-etag');
-      assert.equal(req.file.location, 'mock-location');
+      assert.equal(req.file.versionId, 'mock-version');
       assert.equal(req.file.serverSideEncryption, 'aws:kms');
 
       done();
@@ -239,7 +277,8 @@ describe('Multer S3', function () {
   });
 
   it('upload transformed files', function (done) {
-    var s3 = mockS3();
+    setupMock(mock);
+
     var form = new FormData();
     var storage = multerS3({
       s3: s3,
@@ -279,10 +318,21 @@ describe('Multer S3', function () {
       assert.equal(req.file.transforms[0].bucket, 'test');
       assert.equal(req.file.transforms[0].key, 'test');
       assert.equal(req.file.transforms[0].etag, 'mock-etag');
-      assert.equal(req.file.transforms[0].location, 'mock-location');
+      assert.equal(req.file.transforms[0].versionId, 'mock-version');
       assert.equal(req.file.transforms[1].key, 'test2');
 
       done();
     });
+  });
+
+  it('correctly makes call to s3 to delete object', function (done) {
+    var storage = multerS3({ s3: s3, bucket: 'test' });
+    mock.on(DeleteObjectCommand).resolves({ VersionId: 'mock-object-deleted' });
+    const file = { key: 'abcd', bucket: 'test' };
+    storage._removeFile({}, file, (response) => {
+      assert.equal(response.VersionId, 'mock-object-deleted');
+    });
+
+    done();
   });
 });
