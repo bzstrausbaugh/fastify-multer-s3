@@ -84,7 +84,7 @@ describe('Multer S3', function () {
 
   beforeEach(() => {
     mock = mockClient(S3Client);
-    s3 = new S3Client();
+    s3 = new S3Client({ region: 'us-east-1' });
   });
   afterEach(() => {
     if (mock) {
