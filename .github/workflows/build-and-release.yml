@@ -36,12 +36,12 @@ jobs:
           prerelease: false
           title: ${{ github.ref_name }}
           files: |
-            dist/index.js
-            dist/index.js.map
-            dist/index.cjs
-            dist/index.cjs.map
-            dist/index.d.cts
-            dist/index.d.ts
+            lib/cjs/index.cjs
+            lib/cjs/index.js.map
+            lib/esm/index.js
+            lib/esm/index.js.map
+            lib/index.d.cts
+            lib/index.d.ts
 
       - name: Publish npm package
         uses: JS-DevTools/npm-publish@v3

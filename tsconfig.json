@@ -5,7 +5,7 @@
     "esModuleInterop": true,
     "noImplicitAny": false,
     "moduleResolution": "node",
-    "sourceMap": false,
+    "sourceMap": true,
     "rootDir": "./",
     "outDir": "./lib/esm",
     "baseUrl": ".",
