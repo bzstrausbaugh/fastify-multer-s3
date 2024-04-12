@@ -37,7 +37,7 @@ jobs:
           title: ${{ github.ref_name }}
           files: |
             lib/cjs/index.cjs
-            lib/cjs/index.js.map
+            lib/cjs/index.cjs.map
             lib/esm/index.js
             lib/esm/index.js.map
             lib/index.d.cts

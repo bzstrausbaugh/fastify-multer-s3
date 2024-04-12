@@ -19,7 +19,9 @@
   },
   "files": [
     "lib/esm/index.js",
+    "lib/esm/index.js.map",
     "lib/cjs/index.cjs",
+    "lib/cjs/index.cjs.map",
     "lib/index.d.ts",
     "lib/index.d.cts"
   ],
@@ -27,7 +29,7 @@
     "test": "mocha tests/**/*.js",
     "clean": "rm -rf ./lib",
     "build:types": "npx tsup ./index.ts --out-dir lib --dts-only --format esm,cjs",
-    "build:cjs": "tsc -p tsconfig.cjs.json && mv ./lib/cjs/index.js ./lib/cjs/index.cjs",
+    "build:cjs": "tsc -p tsconfig.cjs.json && mv ./lib/cjs/index.js ./lib/cjs/index.cjs && mv ./lib/cjs/index.js.map ./lib/cjs/index.cjs.map",
     "build:esm": "tsc -p tsconfig.json",
     "build:code": "npm run build:cjs && npm run build:esm",
     "build": "npm run build:types && npm run build:code",
